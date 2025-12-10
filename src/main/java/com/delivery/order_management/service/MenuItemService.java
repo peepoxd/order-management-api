@@ -2,6 +2,7 @@ package com.delivery.order_management.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -166,5 +167,34 @@ public class MenuItemService {
         MenuItem menuItem = getMenuItemById(menuItemId);
         menuItem.setStockQuantity(menuItem.getStockQuantity() + quantity);
         menuItemRepository.save(menuItem);
+    }
+
+    /**
+     * Bulk update stock quantities
+     */
+    @Transactional
+    public void bulkUpdateStock(Map<Long, Integer> stockUpdates) {
+        log.info("Bulk updating stock for {} items", stockUpdates.size());
+
+        for (Map.Entry<Long, Integer> entry : stockUpdates.entrySet()) {
+            Long menuItemId = entry.getKey();
+            Integer newQuantity = entry.getValue();
+
+            MenuItem menuItem = getMenuItemById(menuItemId);
+            menuItem.setStockQuantity(newQuantity);
+            menuItemRepository.save(menuItem);
+
+            log.info("Updated stock for {}: {}", menuItem.getName(), newQuantity);
+        }
+    }
+
+    /**
+     * Get low stock items
+     */
+    public List<MenuItem> getLowStockItems(Integer threshold) {
+        log.info("Fetching items with stock below: {}", threshold);
+        return menuItemRepository.findAll().stream()
+                .filter(item -> item.getStockQuantity() < threshold)
+                .toList();
     }
 }
